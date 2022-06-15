@@ -1,8 +1,10 @@
 package by.rom.testdrivendevelopment.controller;
 
 import by.rom.testdrivendevelopment.exception.NotFoundException;
+import by.rom.testdrivendevelopment.model.Author;
 import by.rom.testdrivendevelopment.model.Book;
 import by.rom.testdrivendevelopment.service.BookService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -15,7 +17,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.List;
+import java.util.Optional;
+
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,25 +38,111 @@ public class BookControllerTest {
     private BookService bookService;
 
     @Test
-    public void getBookByNameFromController() throws Exception {
-        given(bookService.getBookByName(Mockito.anyString())).willReturn(new Book("Idiot"));
+    public void shouldReturnBookWithAuthor() throws Exception {
+        given(bookService.getBookByName("Idiot")).willReturn(
+                new Book("Idiot", Author.builder().firstName("Fyodor").lastName("Dostoyevsky").build()));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/books/Idiot"))
+        mockMvc.perform(get("/api/books/Idiot"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isMap())
                 .andExpect(jsonPath("name").value("Idiot"))
+                .andExpect(jsonPath("author.firstName").value("Fyodor"))
+                .andExpect(jsonPath("author.lastName").value("Dostoyevsky"))
                 .andDo(print());
     }
 
     @Test
-    public void bookNotFound() throws Exception {
+    public void shouldDeleteBook() throws Exception {
+        given(bookService.getBookByName("Idiot")).willReturn(new Book("Idiot"));
+
+        mockMvc.perform(delete("/api/books/Idiot")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
+    @Test
+    public void shouldReturnAllBooks() throws Exception {
+        List<Book> books = List.of(
+                new Book("1984"),
+                new Book("Idiot"),
+                new Book("Dead Souls"));
+
+        given(bookService.getAllBooks()).willReturn(books);
+
+        mockMvc.perform(get("/api/books"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andDo(print());
+    }
+
+    @Test
+    public void shouldSaveBook() throws Exception{
+        Book book = new Book("1984", new Author("George", "Orwell"));
+
+        given(bookService.saveBook(Mockito.any())).willReturn(book);
+
+        mockMvc.perform(
+                post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(book))
+                        .accept(MediaType.APPLICATION_JSON)
+        )
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$").isMap())
+                .andExpect(jsonPath("name").value("1984"))
+                .andExpect(jsonPath("author.firstName").value("George"))
+                .andExpect(jsonPath("author.lastName").value("Orwell"))
+                .andDo(print());
+    }
+
+    @Test
+    void shouldUpdateBook() throws Exception {
+        long id = 1L;
+
+        Book book = Book.builder().id(id).name("Idiot").build();
+        Book updatedBook = Book.builder().id(id).name("The Brothers Karamazov").build();
+
+        given(bookService.findById(id)).willReturn(book);
+        given(bookService.saveBook(Mockito.any())).willReturn(updatedBook);
+
+        mockMvc.perform(put("/api/books/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(updatedBook)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value(updatedBook.getName()))
+                .andDo(print());
+    }
+
+    @Test
+    void shouldReturnNotFoundUpdateBook() throws Exception {
+        long id = 1L;
+
+        Book updatedBook = Book.builder().id(id).name("Dead Sou").build();
+
+        given(bookService.findById(id)).willReturn(null);
+        given(bookService.saveBook(Mockito.any())).willReturn(updatedBook);
+
+        mockMvc.perform(put("/api/books/{id}", id).contentType(MediaType.APPLICATION_JSON)
+                .content(asJsonString(updatedBook)))
+                .andExpect(status().isNotFound())
+                .andDo(print());
+    }
+
+    @Test
+    public void shouldReturn404WhenAccountNotFound() throws Exception {
         given(bookService.getBookByName(Mockito.anyString())).willThrow(new NotFoundException("Book didn't found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/books/Idiot"))
+        mockMvc.perform(get("/api/books/Idiot"))
                 .andExpect(status().isNotFound());
     }
 
 
-
+    public static String asJsonString(final Object obj) {
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

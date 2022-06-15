@@ -26,14 +26,14 @@ public class Book {
         this.name = name;
     }
 
-//    @ManyToOne
-//    @JoinColumn(name = "author_id")
-//    private Author author;
+    @ManyToOne
+    @JoinColumn(name = "author_id")
+    private Author author;
 
     public Book(String name
             , Author author
     ) {
         this.name = name;
-//        this.author = author;
+        this.author = author;
     }
 }

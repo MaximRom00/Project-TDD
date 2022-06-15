@@ -28,7 +28,7 @@ public class BookServiceTest {
     private BookRepository bookRepository;
 
     @Test
-    public void getBookByNameFromService(){
+    public void shouldReturnBook(){
         given(bookRepository.findByName("Idiot")).willReturn(Optional.of(new Book("Idiot")));
 
         Book book = bookService.getBookByName("Idiot");
