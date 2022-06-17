@@ -22,18 +22,11 @@ public class Book {
     @Column
     private String name;
 
-    public Book(String name) {
-        this.name = name;
-    }
-
     @ManyToOne
     @JoinColumn(name = "author_id")
     private Author author;
 
-    public Book(String name
-            , Author author
-    ) {
+    public Book(String name) {
         this.name = name;
-        this.author = author;
     }
 }

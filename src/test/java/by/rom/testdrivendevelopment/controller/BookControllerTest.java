@@ -15,18 +15,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(SpringExtension.class)
-//@WebMvcTest(controllers = BookController.class)
 @AutoConfigureMockMvc
 @SpringBootTest
 public class BookControllerTest {
@@ -40,7 +39,10 @@ public class BookControllerTest {
     @Test
     public void shouldReturnBookWithAuthor() throws Exception {
         given(bookService.getBookByName("Idiot")).willReturn(
-                new Book("Idiot", Author.builder().firstName("Fyodor").lastName("Dostoyevsky").build()));
+                Book.builder()
+                        .name("Idiot")
+                        .author(Author.builder().firstName("Fyodor").lastName("Dostoyevsky").build())
+                        .build());
 
         mockMvc.perform(get("/api/books/Idiot"))
                 .andExpect(status().isOk())
@@ -79,7 +81,10 @@ public class BookControllerTest {
 
     @Test
     public void shouldSaveBook() throws Exception{
-        Book book = new Book("1984", new Author("George", "Orwell"));
+        Book book = Book.builder()
+                .name("1984")
+                .author(Author.builder().firstName("George").lastName("Orwell").build())
+                .build();
 
         given(bookService.saveBook(Mockito.any())).willReturn(book);
 
@@ -98,19 +103,23 @@ public class BookControllerTest {
     }
 
     @Test
-    void shouldUpdateBook() throws Exception {
-        long id = 1L;
 
-        Book book = Book.builder().id(id).name("Idiot").build();
-        Book updatedBook = Book.builder().id(id).name("The Brothers Karamazov").build();
+    public void shouldReturnUpdatedBook() throws Exception{
+        long id = 2L;
 
-        given(bookService.findById(id)).willReturn(book);
-        given(bookService.saveBook(Mockito.any())).willReturn(updatedBook);
+        Book book = Book.builder().id(id).name("Idiot").author(new Author("Fyodor", "Dostoevsky")).build();
+        Book updatedBook = Book.builder().id(id).name("The Brothers Karamazov").author(new Author("Fyodor", "Dostoevsky")).build();
 
-        mockMvc.perform(put("/api/books/{id}", id).contentType(MediaType.APPLICATION_JSON)
+        given(bookService.findById(id)).willReturn(Optional.of(book));
+        given(bookService.updateBook(Mockito.any())).willReturn(updatedBook);
+
+         mockMvc.perform(put("/api/books/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(updatedBook)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value(updatedBook.getName()))
+                .andExpect(jsonPath("$.name", is(updatedBook.getName())))
+                .andExpect(jsonPath("$.author.firstName", is(updatedBook.getAuthor().getFirstName())))
+                .andExpect(jsonPath("$.author.lastName", is(updatedBook.getAuthor().getLastName())))
                 .andDo(print());
     }
 
@@ -118,12 +127,13 @@ public class BookControllerTest {
     void shouldReturnNotFoundUpdateBook() throws Exception {
         long id = 1L;
 
-        Book updatedBook = Book.builder().id(id).name("Dead Sou").build();
+        Book updatedBook = Book.builder().id(id).name("Dead Soul").build();
 
-        given(bookService.findById(id)).willReturn(null);
+        given(bookService.findById(id)).willReturn(Optional.empty());
         given(bookService.saveBook(Mockito.any())).willReturn(updatedBook);
 
-        mockMvc.perform(put("/api/books/{id}", id).contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/books/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(asJsonString(updatedBook)))
                 .andExpect(status().isNotFound())
                 .andDo(print());

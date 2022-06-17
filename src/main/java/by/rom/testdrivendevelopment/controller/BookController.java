@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/books")
@@ -44,17 +43,18 @@ public class BookController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable("id") long id, @RequestBody Book updatedBook) {
-        Book book = bookService.findById(id);
-        if (book != null) {
-            return new ResponseEntity<>(bookService.saveBook(book), HttpStatus.OK);
-        }
-        else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+    @PutMapping("{id}")
+    public ResponseEntity<Book> updateBook(@PathVariable("id") long id, @RequestBody Book book){
+        return bookService.findById(id)
+                .map(savedBook -> {
+
+                    savedBook.setName(book.getName());
+                    savedBook.setAuthor(book.getAuthor());
+
+                    Book updatedBook = bookService.updateBook(savedBook);
+                    return new ResponseEntity<>(updatedBook, HttpStatus.OK);
+
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
-
-
-
 }

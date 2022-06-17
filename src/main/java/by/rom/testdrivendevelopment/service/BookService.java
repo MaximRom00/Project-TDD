@@ -1,11 +1,13 @@
 package by.rom.testdrivendevelopment.service;
 
+import by.rom.testdrivendevelopment.exception.IsPresentException;
 import by.rom.testdrivendevelopment.exception.NotFoundException;
 import by.rom.testdrivendevelopment.model.Book;
 import by.rom.testdrivendevelopment.repository.BookRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BookService {
@@ -31,12 +33,20 @@ public class BookService {
     }
 
     public Book saveBook(Book book) {
+        Optional<Book> savedBook = bookRepository.findByName(book.getName());
+
+        if(savedBook.isPresent()){
+            throw new IsPresentException("Book already exist with name:" + book.getName());
+        }
+
         return bookRepository.save(book);
     }
 
-    public Book findById(long id) {
-        return bookRepository.findById(id).orElseThrow(() -> {
-            throw new NotFoundException("Book wasn't found with id: " + id);
-        });
+    public Book updateBook( Book book) {
+        return bookRepository.save(book);
+    }
+
+    public Optional<Book> findById(long id) {
+        return bookRepository.findById(id);
     }
 }
