@@ -12,17 +12,20 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@ToString(exclude = "books")
 public class Author {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "firstName")
     private String firstName;
 
+    @Column(name = "lastName")
     private String lastName;
 
-    @OneToMany(mappedBy = "author")
+    @OneToMany(mappedBy = "author", fetch = FetchType.EAGER)
     private final List<Book> books = new ArrayList<>();
 
     public Author(String firstName, String lastName) {

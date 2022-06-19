@@ -20,7 +20,7 @@ CREATE TABLE BOOK (
                       AUTHOR_ID int
 );
 
-INSERT INTO BOOK (name, AUTHOR_ID) VALUES ('Idiot', null);
+INSERT INTO BOOK (name, AUTHOR_ID) VALUES ('Idiot', 1);
 INSERT INTO BOOK (name, AUTHOR_ID) VALUES ('1984', 2);
 INSERT INTO BOOK (name, AUTHOR_ID) VALUES ('The Little Prince', 3);
 INSERT INTO BOOK (name, AUTHOR_ID) VALUES ('The Grapes of Wrath', 4);
