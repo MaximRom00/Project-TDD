@@ -103,7 +103,6 @@ public class BookControllerTest {
     }
 
     @Test
-
     public void shouldReturnUpdatedBook() throws Exception{
         long id = 2L;
 
@@ -140,7 +139,7 @@ public class BookControllerTest {
     }
 
     @Test
-    public void shouldReturn404WhenAccountNotFound() throws Exception {
+    public void shouldReturn404WhenBookNotFound() throws Exception {
         given(bookService.getBookByName(Mockito.anyString())).willThrow(new NotFoundException("Book didn't found"));
 
         mockMvc.perform(get("/api/books/Idiot"))

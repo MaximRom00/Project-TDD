@@ -92,7 +92,7 @@ public class BookServiceTest {
 
     @Test
     public void bookNotFound(){
-        given(bookRepository.findByName("pulse")).willReturn(Optional.empty());
+        given(bookRepository.findByName("My book")).willReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, ()-> bookService.getBookByName("Idiot"));
     }
